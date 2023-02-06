@@ -1,24 +1,10 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import warnings
 import logging
 import statsmodels.api as sm
 from scipy.stats import ttest_ind
 
-plt.style.use('ggplot')
-warnings.simplefilter(action='ignore', category=FutureWarning)
-pd.options.mode.chained_assignment = None  # default='warn'
-
 class Regressor():
-#     def __str__(self):
-#         pass
-    
-#     def __repr__(self):
-#         return "<Job Group Object> {} | Headcount: {}".format(self.name, self.df.shape[0])
     
     def __init__(
         self, 
@@ -98,7 +84,12 @@ class Regressor():
         
         coef['Significant'] = np.where(coef['P>|t|']<0.05,"Yes","No")
         coef = coef[['Job Group','Variable','Feature','Reference','Exp. Coef.','Significant','P>|t|']]
-        coef[(coef['Variable'].isna())&(coef['Feature'].isna())]['Variable'] = 'Constant'
+        
+        
+        
+        
+        
+        coef.loc[(coef['Variable'].isna())&(coef['Feature'].isna()),'Variable'] = 'Constant'
         coef['Variable'] = np.where(
             (coef['Variable'].isna())&(coef['Feature'].isna()),
             'Constant',

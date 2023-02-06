@@ -1,23 +1,11 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import pandas as pd
-import matplotlib.pyplot as plt
-import warnings
 from .JobGroup import JobGroup
 from .Audit import Audit
 
-
-plt.style.use('ggplot')
-warnings.simplefilter(action='ignore', category=FutureWarning)
-pd.options.mode.chained_assignment = None  # default='warn'
-
 class JobGroupEnssemble(JobGroup):
-#     def __str__(self):
-#         pass
     
-#     def __repr__(self):
-#         return "<Job Group Enssemble> {} | Headcount: {}".format(self.name, self.df.shape[0])
+    def __repr__(self):
+        return "<Job Group Enssemble> {} | # of Job Groups: {}".format(self.name, len(self.job_groups))
     
     def __init__(
         self, 
@@ -55,7 +43,6 @@ class JobGroupEnssemble(JobGroup):
         self.headcount_cutoff = headcount_cutoff
     
     def generate_job_groups(self):
-
         
         self.job_groups = []
         
@@ -85,18 +72,20 @@ class JobGroupEnssemble(JobGroup):
     def set_overall_references(self, specified):
         
         for jg in self.job_groups:
-            self.logger.info("Setting reference for {}".format(jg.name))
+            self.logger.debug("Setting reference for {}".format(jg.name))
             jg.set_references(specified)
     
     def run_regressions(self):
         for job_group in self.job_groups:
             job_group._run_regression()
+            self.logger.info("Regression for {} completed.".format(job_group.name)) 
         self.regressors = [x.regressor for x in self.job_groups]
         self.logger.info("Use generate_audit() to compile and access regression results")
     
     def run_iter_regressions(self):
         for job_group in self.job_groups:
             job_group._iterative_regression()
+            self.logger.info("Iterative Regression for {} completed.".format(job_group.name)) 
         self.logger.info("Use generate_audit() to compile and access iter regression results") 
         
     def run_individual_remediation(self):

@@ -1,24 +1,9 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
-import warnings
-import seaborn as sns
 import logging
-import statsmodels.api as sm
-from scipy import stats
-from .Regressor import Regressor
 from datetime import date
 import string
 import pandas.io.formats.excel
-
 pandas.io.formats.excel.ExcelFormatter.header_style = None
-plt.style.use('ggplot')
-warnings.simplefilter(action='ignore', category=FutureWarning)
-pd.options.mode.chained_assignment = None  # default='warn'
 
 class Audit():
 #     def __str__(self):
@@ -121,7 +106,7 @@ class Audit():
         for regressor in self.regressors:
             try:
                 coef = regressor.iterative_coef
-                coef = coef[coef['Variable'].isin([self.column_map_inv[x] for x in self.div_vars.values()])]
+                coef = coef.loc[coef['Variable'].isin([self.column_map_inv[x] for x in self.div_vars.values()])]
                 self.iterative_coef = pd.concat([self.iterative_coef, coef])
             except:
                 self.logger.warn("No iterative regression detected for {}".format(regressor.name))
@@ -305,7 +290,7 @@ class Audit():
             self._format_worksheet(worksheet, df_dict[sheet], sheet_format[sheet])
             
         
-        writer.save()
+        writer.close()
         if iter:
             self._export_iter_regressions(version=version)
 

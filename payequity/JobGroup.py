@@ -1,23 +1,13 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-import warnings
 import logging
 from .Regressor import Regressor
 
-plt.style.use('ggplot')
-warnings.simplefilter(action='ignore', category=FutureWarning)
-pd.options.mode.chained_assignment = None  # default='warn'
-
 class JobGroup():
-#     def __str__(self):
-#         pass
     
-    def __str__(self):
+    def __repr__(self):
         return "<Job Group Object> {} | Headcount: {}".format(self.name, self.df.shape[0])
     
     def __init__(
@@ -34,8 +24,6 @@ class JobGroup():
         div_min=None, 
         div_ref=None,
         name="Company"):
-
-        ################### Create a function that validates all the inputs #####
         
         self.name=name
         self.logger = self._get_logger(name=self.name)
@@ -47,15 +35,9 @@ class JobGroup():
         self.column_map_inv = self._initialize_column_map(column_map_inv, self.original_cols, inv=True)
         self._initial_null_check()
         
-        # key variables
-        
         self.eeid = eeid if eeid in self.df.columns else self.column_map[eeid]
-#         self.eeid = self.column_map[eeid]
         self.pay_component = pay_component if pay_component in self.df.columns else self.column_map[pay_component]
-        self.key_variables = [
-            self.eeid, 
-            self.pay_component, 
-            ]
+        self.key_variables = [self.eeid, self.pay_component]
 
         self.numerical, self.categorical = self._categorize_columns()
         
@@ -104,8 +86,7 @@ class JobGroup():
                     self.logger.error("Minority and/or reference for '{}' not present in the df".format(div))
                     self.logger.error("Check the div_min and div_ref dictionaries")
                     raise ValueError()
-        
-        
+
         elif set(div_vars.values()).issubset(self.original_cols):
             for div in div_vars:
                 minority = div_min[div]
@@ -124,7 +105,6 @@ class JobGroup():
             raise ValueError()
 
         return div_vars
-        
     
     def _initialize_variables(self, predictive_vars, diagnostic_vars, iter_order):
         self.predictive_vars = self.set_variables(predictive_vars, label='predictive')
@@ -309,7 +289,7 @@ class JobGroup():
                 self._validate_variable(variable)
         
     def _format_columns(self, df): 
-        df.columns = df.columns.str.upper().str.replace('[^0-9a-zA-Z]+', '_')
+        df.columns = df.columns.str.upper().str.replace('[^0-9a-zA-Z]+', '_', regex=True)
         return df
     
     def _initial_null_check(self):
@@ -493,8 +473,7 @@ class JobGroup():
         except:
             for variable in variables:
                 self._validate_variable(variable)
-                
-    
+                 
     def _create_regressor(self):
         self.regressor = Regressor(
             df=self.df,
