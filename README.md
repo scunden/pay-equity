@@ -1,6 +1,6 @@
 # Pay Equity Library
 
-This purpose of this libary is to allow the organization carry out pay equity audits in a practical and sustainable manner. The library contains multiple functionalities, including regression modelling, t-test of residuals and remediation. Outlined below is guide for use of the library.
+This purpose of this libary is to allow organizations to carry out pay equity audits in a practical and sustainable manner. The library contains multiple functionalities, including regression modelling, t-test of residuals and remediation. Outlined below is guide for use of the library.
 
 ## Installation and Import
 
@@ -35,25 +35,29 @@ jge = JobGroupEnssemble(
     div_vars=None, 
     div_min=None, 
     div_ref=None,
-    name="C&W Base Pay",
-    job_group_column='Job Group'
+    name='Base Pay Model',
+    job_group_column='Job Group',
+    headcount_cutoff=100
 )
 ```
 * `df`: Dataframe  -  Employee level data. Note that once instantiated, the nomanclature of each column will be changed - all strings will be capitalized and special chars ans white spaced replaced by underscores
 * `eeid`: String - Variable used to identify Employee ID
 * `pay_component`: String - Variable used to identify pay component. The pay component in the data should not be log transformed.
 * `predictive_vars`: List of Strings - Variables to be used in pay prediction modelling - should all be legitimate factors
-* `diagnostic_vars`: List of Strings - Variables to be used in diagnostic modelling - any variable to be tested, but not included in `predictive_vars`. Do not include diversity variables.
+* `diagnostic_vars`: List of Strings - Variables to be used in diagnostic modelling - any variable to be tested, but not included in making pay predictions. Do not include diversity variables.
 * `iter_order`: List of Strings - This list should mirror in content `predictive_vars` but should have an intended order for the iterative anlaysis.
 * `div_vars`: Dictionary - Contains all of the relevant diversities and their corresponding variables to be evaluated in this audit. More details below
 * `div_min`: Dictionary - Contains all of the relevant minorities and their corresponding variables to be evaluated in this audit. More details below
 * `div_ref`: Dictionary - Contains all of the relevant references and their corresponding variables to be evaluated in this audit. More details below
 * `name`: String - Name of the enssemble
 * `job_group_column`: String - Variable used to identify the job group column in `df`
+* `headcount_cutoff`: Int - The minimum number of headcount required for analysis in a single job group - default is 100
 
 ### Specifying Diversities
 
-If left unspecified, the three diversity dictionaries mentioned above will take the following default values:
+Diversities are specified in a set of dictionaries. The first dictionary `div_vars` should contain a set of key and values that map to the diversity name (capitalized and with only alphabetical characters and underscores) and their corresponding column in the dataset. In the enxt two dictionaries, you must specify what the minority and reference values are for each diversity (i.e., 'Women' and 'Male' for 'GENDER')
+
+Below is an example of the diversities dictionaries required to implement the job group enssemble. Every key present in the `div_vars` dictionary needs to be present in the other two dictionaries.  
 
 ```
 div_vars = {
@@ -74,8 +78,6 @@ div_ref = {
     'ETHNICITY_BINARY':'White',
     'AGE_GROUP':'Below 40'}
 ```
-
-The default values have been built to match C&W's nomanclature and should preferably not be changed. However, if there are any changes in the data that render the default values incorrect, new values can be specified in the instantiation of the job groups. Simply use the same format for the dictionaries.
 
 ### Removing a Diversity from Scope
 
@@ -112,3 +114,15 @@ When a regression is ran within a `JobGroup` object, the object will automatical
 ```
 jge.set_overall_references(specified={"High Performer":"No"})
 ```
+
+If you wanted to change the reference for `High Performer` to be 'Yes' in only one of your job groups, you cna use the following code:
+
+```
+jge.job_groups[0].set_references(specified={"High Performer":"No"})
+```
+
+## Running Regressions
+
+You can run the regressions individually on a given job group, or you can run it on all the job groups within the enssemble using the command `jge.run_regressions()`
+
+Once the command above is successfully ran, it will create a `regressor` object for each job group.
