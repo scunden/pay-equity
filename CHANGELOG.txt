@@ -1,0 +1,12 @@
+# Change Log
+===========
+
+0.1.0 (8/11/22)
+------------------
+### Added
+- Functionality to add overall references to the enssemble
+- Basic T-test functionality to each regressor, and subsequently to job groups and enssemble
+
+### Change
+
+### Removed
