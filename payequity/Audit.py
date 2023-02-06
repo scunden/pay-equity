@@ -34,7 +34,7 @@ class Audit():
         div_min=None,
         column_map_inv=None,
         remediated=False,
-        name="C&W"):
+        name="Company"):
         
         self.name=name
         self.logger = self._get_logger(name=self.name+" Audit")
@@ -49,6 +49,9 @@ class Audit():
         self.df = pd.concat([reg.df for reg in self.regressors])
         self.df = self.df[[x for x in self.df.columns if x in self.column_map_inv]]
         self.df.columns = [self.column_map_inv[x] for x in self.df.columns]
+
+        self.eeid = self.regressors[0].eeid
+        self.eeid_original = self.column_map_inv[self.eeid]
 
 
         if self.remediated:
@@ -175,15 +178,7 @@ class Audit():
         summary.set_index(['Job Group'], inplace=True)
 
         sig_cols = [x for x in summary.columns if 'P>|t|' in x]
-        # for col in sig_cols:
-        #     summary[col+"?"] = np.where(
-        #         summary[col].isna(),"NaN",
-        #         np.where(
-        #             summary[col]<=0.05,
-        #             "Yes",
-        #             "No"
-        #         )
-        #     )
+
         summary.columns = [x.split('~')[1]+' Gap' if 'Coef' in x else x.split('~')[1]+' Sig.' for x in\
                            summary.columns]
         summary = summary.reindex(sorted(summary.columns), axis=1)
@@ -203,7 +198,7 @@ class Audit():
     def export_all(self, version="", diagnostic=True, predictions=True, iter=False):
 
         version = date.today().strftime("%d.%m.%Y")+version
-        writer = pd.ExcelWriter('C&W Pay Equity Audit {}.xlsx'.format(version), engine='xlsxwriter')
+        writer = pd.ExcelWriter('{} Pay Equity Audit {}.xlsx'.format(self.name, version), engine='xlsxwriter')
         workbook = writer.book
 
         header_fmt = workbook.add_format({"bg_color": "#ed1b2c","bold": True,'font_color': '#FFFFFF','border': 1})
@@ -222,7 +217,7 @@ class Audit():
             "Predictive Coef.":self.predictive_coef,
             "Model Performance":self.predictive_dof,
             "Correlations":self.predictive_corr,
-            "Predictions":self.df.merge(self.predictions, on='Employee ID', how='left') if predictions else pd.DataFrame(),
+            "Predictions":self.df.merge(self.predictions, left_on=self.eeid_original, right_on=self.eeid, how='left') if predictions else pd.DataFrame(),
         }
 
         summary_fmt = {

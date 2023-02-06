@@ -23,6 +23,7 @@ class Regressor():
     def __init__(
         self, 
         df,
+        eeid,
         numerical,
         categorical,
         y,
@@ -36,12 +37,13 @@ class Regressor():
         div_vars=None, 
         div_min=None, 
         div_ref=None,
-        name="C&W"):
+        name="Company"):
         
         self.name=name
         self.logger = self._get_logger(name=self.name+" Regressor")
 
         self.df=df
+        self.eeid = eeid
         self.numerical=numerical
         self.categorical=categorical
         self.y=y
@@ -52,6 +54,7 @@ class Regressor():
         self.iter_order=iter_order
         self.column_map=column_map
         self.column_map_inv=column_map_inv
+        self.eeid_original = self.column_map_inv[self.eeid]
         self.div_vars=div_vars
         self.div_min=div_min
         self.div_ref=div_ref
@@ -148,8 +151,7 @@ class Regressor():
 
         predictions = self._generate_predictions(self.predictive_X, self.predictive_results)
         self.predictions = self._generate_outliers(predictions)
-        self.predictions = self.predictions.join(self.df['EMPLOYEE_ID']).rename({'EMPLOYEE_ID':'Employee ID'}, axis=1)
-        self.lower_outliers = self.predictions[self.predictions["Lower Outlier"]==1]['Employee ID'].unique()
+        self.predictions = self.predictions.join(self.df[self.eeid])
 
         self.predictive_corr = self._generate_correlations(self.predictive_X , label=label)
         self.predictive_dof = self._dof(self.predictive_X , label=label, results=self.predictive_results)
@@ -491,7 +493,7 @@ class Regressor():
 
     def segment_gap(self, segment):
         df_temp = self.df.copy()
-        df_temp = df_temp.merge(self.predictions, left_on="EMPLOYEE_ID", right_on="Employee ID", how='right')
+        df_temp = df_temp.merge(self.predictions, on=self.eeid, how='right')
         df_temp["Residual"] = np.log(df_temp["Actual"])-np.log(df_temp["Prediction"])
 
         results = pd.DataFrame()

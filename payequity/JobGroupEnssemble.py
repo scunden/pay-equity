@@ -2,14 +2,8 @@
 # coding: utf-8
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
 import warnings
-import seaborn as sns
-import logging
-import statsmodels.api as sm
-from scipy import stats
 from .JobGroup import JobGroup
 from .Audit import Audit
 
@@ -38,8 +32,10 @@ class JobGroupEnssemble(JobGroup):
         div_vars=None, 
         div_min=None, 
         div_ref=None,
-        name="C&W",
-        job_group_column='Business Category'):
+        name="Company",
+        job_group_column='Business Category',
+        headcount_cutoff=100
+        ):
         
         super().__init__(
             df, 
@@ -56,15 +52,18 @@ class JobGroupEnssemble(JobGroup):
             name=name
         ) 
         self.job_group_column = self.column_map[job_group_column]
+        self.headcount_cutoff = headcount_cutoff
     
-    def generate_job_groups(self, headcount_cutoff=100):
+    def generate_job_groups(self):
+
+        
         self.job_groups = []
         
         for jg in self.df[self.job_group_column].unique():
             df_temp = self.df[self.df[self.job_group_column]==jg]
             headcount = df_temp.shape[0]
             
-            if headcount>headcount_cutoff:
+            if headcount>self.headcount_cutoff:
                 self.job_groups.append(JobGroup(
                     df=df_temp, 
                     eeid=self.eeid, 
@@ -79,6 +78,7 @@ class JobGroupEnssemble(JobGroup):
                     div_ref=self.div_ref,
                     name=jg
                 ))
+                self.logger.info("{} Job Group Created and Validated".format(jg))
             else:
                 self.logger.error("Failed to build {} job group. Not enough headcount ({})".format(jg,headcount))
     
@@ -90,17 +90,18 @@ class JobGroupEnssemble(JobGroup):
     
     def run_regressions(self):
         for job_group in self.job_groups:
-            job_group.run_regression()
+            job_group._run_regression()
+        self.regressors = [x.regressor for x in self.job_groups]
         self.logger.info("Use generate_audit() to compile and access regression results")
     
     def run_iter_regressions(self):
         for job_group in self.job_groups:
-            job_group.iterative_regression()
+            job_group._iterative_regression()
         self.logger.info("Use generate_audit() to compile and access iter regression results") 
         
     def run_individual_remediation(self):
         for job_group in self.job_groups:
-            job_group.run_individual_remediation()
+            job_group._run_individual_remediation()
         self.logger.info("Use generate_audit(remediatied=True) to compile and access remediation summary") 
 
     def run_segment_gap(self, segment):
@@ -112,9 +113,9 @@ class JobGroupEnssemble(JobGroup):
         return results
                 
     def generate_audit(self, remediated=False):
-        regressors = [x.regressor for x in self.job_groups]
+        
         self.audit = Audit(
-            regressors,
+            self.regressors,
             div_vars=self.div_vars, 
             div_min=self.div_min, 
             column_map_inv=self.column_map_inv,

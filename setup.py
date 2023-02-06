@@ -21,7 +21,7 @@ setup(
     description='Pay Equity Library',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='https://github.com/CW-People-Analytics/CWPayEquity',
+    url='https://github.com/scunden/pay-equity',
     license='MIT',
     packages=find_packages(),
     install_requires=['numpy','pandas'],

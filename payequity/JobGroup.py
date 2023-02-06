@@ -33,7 +33,7 @@ class JobGroup():
         div_vars=None, 
         div_min=None, 
         div_ref=None,
-        name="C&W"):
+        name="Company"):
 
         ################### Create a function that validates all the inputs #####
         
@@ -71,7 +71,6 @@ class JobGroup():
         self.df[self.log_pay_component] = np.log(self.df[self.pay_component])
         self.y = self.df[self.log_pay_component]
         
-        self.regressor = None
         self.categorized=False
         
     
@@ -88,15 +87,13 @@ class JobGroup():
     
     def _initialize_diversities(self, div_vars, div_min, div_ref):
 
-        self._check_diversity()
-
-        self.div_vars = {div: self.column_map[div_vars[div]] for div in div_vars}
+        self.div_vars = self._validate_diversity(div_vars, div_min, div_ref)
         self.div_min = div_min
         self.div_ref = div_ref
         
         self.hug_vars = list(self.div_vars.values())
 
-    def _check_diversity(self, div_vars, div_min, div_ref):
+    def _validate_diversity(self, div_vars, div_min, div_ref):
 
         if set(div_vars.values()).issubset(self.df.columns):
             for div in div_vars:
@@ -119,9 +116,14 @@ class JobGroup():
                     self.logger.error("Check the div_min and div_ref dictionaries")
                     raise ValueError()
 
+                else:
+                    div_vars = {div: self.column_map[div_vars[div]] for div in div_vars}
+
         else:
             self.logger.error("Some diversities in div_var are not present in df. Update the div_var dictionary")
             raise ValueError()
+
+        return div_vars
         
     
     def _initialize_variables(self, predictive_vars, diagnostic_vars, iter_order):
@@ -162,7 +164,7 @@ class JobGroup():
     
     def _generate_diagnostic_variables(self, diagnostic_vars):
         
-        self.logger.info("Diagnostic variables generated")
+        self.logger.debug("Diagnostic variables generated")
         if diagnostic_vars is None:
             return self.hug_vars+ self.predictive_vars
         else:
@@ -239,7 +241,7 @@ class JobGroup():
                 self.logger.warn("{} initialized but NaNs detected.".format(label.title()))
                 self.logger.warn("Use null_check() and fill_categorical_nas().")
             self._generate_references(variables)
-            self.logger.info("{} variables validated and references generated.".format(label.title()))
+            self.logger.debug("{} variables validated and references generated.".format(label.title()))
             
             return variables
             
@@ -266,8 +268,8 @@ class JobGroup():
     def _validate_iter_order(self, iter_order):
 
         if iter_order is None:
-            self.logger.error("iter_order is not initialized. Order set to predictive_vars.")
-            self.logger.error("Use set_iter_order() to specifiy an order.")
+            self.logger.debug("iter_order is not initialized. Order set to predictive_vars.")
+            self.logger.debug("Use set_iter_order() to specifiy an order.")
             
             return self.predictive_vars
             
@@ -288,7 +290,7 @@ class JobGroup():
                     self.logger.warn("iter_order initialized but NaNs detected.")
                     self.logger.warn("Use null_check() and fill_categorical_nas().")
 
-                self.logger.info("iter_order validated and generated.")
+                self.logger.debug("iter_order validated and generated.")
 
                 return iter_order
             else:
@@ -388,50 +390,6 @@ class JobGroup():
         except:
             for variable in specified.keys():
                 self._validate_variable(variable)
-
-    def diversity_distributions(self, by=None, min_visible=0.05, figsize=(12, 8)):
-        
-        for div in self.div_vars:
-            self._plot_distributions(
-                var=self.div_vars[div],
-                by=self.column_map[by], 
-                min_visible=min_visible, 
-                figsize=figsize
-            )
-            
-    def _plot_distributions(self, var, by=None, min_visible=0.05, figsize=(12, 8)):
-        
-        df_plot = self.df.groupby([by,var]).size().reset_index().pivot(index=by, columns=var, values=0).fillna(0)
-        df_plot = df_plot.div(df_plot.sum(axis=1), axis=0)
-        ax = df_plot.plot(stacked=True, kind='bar', figsize=figsize, rot='horizontal')
-
-        # .patches is everything inside of the chart
-        for rect in ax.patches:
-            # Find where everything is located
-            height = rect.get_height()
-            width = rect.get_width()
-            x = rect.get_x()
-            y = rect.get_y()
-
-            # The height of the bar is the data value and can be used as the label
-            label_text = "{:.0%}".format(height)
-
-            # ax.text(x, y, text)
-            label_x = x + width / 2
-            label_y = y + height / 2
-
-            # plot only when height is greater than specified value
-            if height > min_visible:
-                ax.text(label_x, label_y, label_text, ha='center', va='center', fontsize=8)
-
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', biter_orderaxespad=0.)    
-        ax.set_ylabel("Distribution")
-        ax.set_xlabel("{}".format(self.column_map_inv[by]))
-        ax.set_title("{} Distribution by {}".format(
-            self.column_map_inv[var], 
-            self.column_map_inv[by]
-        ), fontsize=14)
-        plt.show()
         
     def _create_diversity_coef(self, coef):
         hug_coef = pd.DataFrame()
@@ -538,9 +496,9 @@ class JobGroup():
                 
     
     def _create_regressor(self):
-        if self.regressor is None:
-            self.regressor = Regressor(
+        self.regressor = Regressor(
             df=self.df,
+            eeid = self.eeid,
             numerical=self.numerical,
             categorical=self.categorical,
             y=self.y,
@@ -557,16 +515,16 @@ class JobGroup():
             name=self.name
         )
             
-    def run_regression(self):
+    def _run_regression(self):
         if not self.categorized:
             self._categorize_data()
         self._create_regressor()
         self.regressor.run_regression()
 
-    def run_individual_remediation(self):
+    def _run_individual_remediation(self):
         self.regressor.individual_remediation()
         
-    def iterative_regression(self, export=False):
+    def _iterative_regression(self, export=False):
         if not self.categorized:
             self._categorize_data()
         self._create_regressor()

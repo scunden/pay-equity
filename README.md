@@ -4,16 +4,16 @@ This purpose of this libary is to allow the organization carry out pay equity au
 
 ## Installation and Import
 
-To install the library, please ensure that you have access to https://github.com/CW-People-Analytics. Once you do, you can install the library via command line, using:
+To install the library, please ensure that you have access to https://github.com/scunden/pay-equity. Once you do, you can install the library via command line, using:
 
 ```
-pip install git+https://github.com/CW-People-Analytics/CWPayEquity.git
+pip install git+https://github.com/scunden/pay-equity.git
 ```
 
 To import the library and check the version, use the commands below:
 ```
-import CWPayEquity
-CWPayEquity.__version__
+import payequity
+payequity.__version__
 ```
 
 ## Creating Job Groups and Enssemble
