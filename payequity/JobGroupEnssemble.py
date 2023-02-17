@@ -41,6 +41,7 @@ class JobGroupEnssemble(JobGroup):
         ) 
         self.job_group_column = self.column_map[job_group_column]
         self.headcount_cutoff = headcount_cutoff
+        self.rejected_jg = []
     
     def generate_job_groups(self):
         
@@ -68,6 +69,7 @@ class JobGroupEnssemble(JobGroup):
                 self.logger.info("{} Job Group Created and Validated".format(jg))
             else:
                 self.logger.error("Failed to build {} job group. Not enough headcount ({})".format(jg,headcount))
+                self.rejected_jg.append(jg)
     
     def set_overall_references(self, specified):
         
