@@ -4,8 +4,8 @@ from .Audit import Audit
 
 class JobGroupEnssemble(JobGroup):
     
-    def __repr__(self):
-        return "<Job Group Enssemble> {} | # of Job Groups: {}".format(self.name, len(self.job_groups))
+    # def __repr__(self):
+    #     return "<Job Group Enssemble> {} | # of Job Groups: {}".format(self.name, len(self.job_groups))
     
     def __init__(
         self, 

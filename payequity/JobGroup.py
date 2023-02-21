@@ -88,6 +88,7 @@ class JobGroup():
                     raise ValueError()
 
         elif set(div_vars.values()).issubset(self.original_cols):
+            
             for div in div_vars:
                 minority = div_min[div]
                 ref = div_ref[div]
@@ -97,8 +98,7 @@ class JobGroup():
                     self.logger.error("Check the div_min and div_ref dictionaries")
                     raise ValueError()
 
-                else:
-                    div_vars = {div: self.column_map[div_vars[div]] for div in div_vars}
+            div_vars = {div: self.column_map[div_vars[div]] for div in div_vars}
 
         else:
             self.logger.error("Some diversities in div_var are not present in df. Update the div_var dictionary")
